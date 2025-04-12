@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import config from './config.js'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -22,11 +23,22 @@ function App() {
       console.log(event)
       if (event.source !== window) return;
       
+      // Check for authentication errors in any response
+      if (event.data.response && event.data.response.error === "Not authenticated") {
+        
+        setIsLoggedIn(false);
+        setIsInRoom(false);
+        setError("Session expired. Please login again.");
+        return;
+      }
+      
       if (event.data.type === 'FROM_EXTENSION_FETCH_ROOMS') {
         const response = event.data.response;
-        if (response.success) {
-          setEditingRooms(response.data.editingRooms)
-          setViewingRooms(response.data.viewingRooms)
+        
+        if (response.success && response.data.editingRooms != {error: 'Not authenticated'}) {
+          console.log(response)
+          //setEditingRooms(response.data.editingRooms)
+          //setViewingRooms(response.data.viewingRooms)
         }
       }
       

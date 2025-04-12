@@ -1,37 +1,47 @@
 {
-    "manifest_version": 3,
-    "name": "React Chrome Extension",
-    "version": "1.0.0",
-    "description": "A simple React app as a Chrome extension",
-    "background": {
-        "service_worker": "background.js"
-    },
-    "content_scripts": [
-        {
-            "matches": ["<all_urls>"],
-            "js": ["content.js"],
-            "run_at": "document_end"
-        },
-        {
-            "matches": ["<all_urls>"],
-            "js": ["util.js"],
-            "run_at": "document_idle"
-        }
-    ],
-    "host_permissions": ["<all_urls>"],
-    "permissions": ["storage"],
-    "web_accessible_resources": [
+  "manifest_version": 3,
+  "name": "React Chrome Extension",
+  "version": "1.0.0",
+  "description": "A simple React app as a Chrome extension",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
     {
-        "resources": ["index.html"],
-        "matches": ["<all_urls>"]
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
     },
     {
-        "resources": ["*"],
-        "matches": ["<all_urls>"]
-    },
-    {
-        "resources": ["assets/*"],
-        "matches": ["<all_urls>"]
+      "matches": ["<all_urls>"],
+      "js": ["util.js"],
+      "run_at": "document_idle"
     }
-    ]  
+  ],
+  "host_permissions": ["<all_urls>"],
+  "permissions": ["storage",
+  "cookies", "http://localhost:5000/"],
+  "web_accessible_resources": [
+    {
+      "resources": ["index.html"],
+      "matches": ["<all_urls>"]
+    },
+    {
+      "resources": ["*"],
+      "matches": ["<all_urls>"]
+    },
+    {
+      "resources": ["assets/*"],
+      "matches": ["<all_urls>"]
+    },
+    {
+      "resources": ["socket.io.min.js"],
+      "matches": ["<all_urls>"]
+    },
+    {
+      "resources": ["config.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
