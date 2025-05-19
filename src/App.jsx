@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import config from './config.js'
+import { MathJax, MathJaxContext } from 'better-react-mathjax'
+import LatexDisplayer from './Latex.jsx'
+
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [roomCode, setRoomCode] = useState('')
   const [content, setContent] = useState('')
   const [error, setError] = useState('')
@@ -19,14 +20,30 @@ function App() {
   const [latex, setLatex] = useState('')
 
   useEffect(() => {
+    // Check authentication status when component mounts
+    window.postMessage({
+      type: 'FROM_PAGE_CHECK_AUTH',
+      message: { type: 'checkAuth' }
+    }, '*');
+
     const messageHandler = (event) => {
-      console.log(event)
+      
       if (event.source !== window) return;
+      
+      // Handle authentication check response
+      if (event.data.type === 'FROM_EXTENSION_CHECK_AUTH') {
+        const response = event.data.response;
+        setIsAuthenticated(response.isAuthenticated);
+        if (!response.isAuthenticated) {
+          setIsInRoom(false);
+        }
+        return;
+      }
       
       // Check for authentication errors in any response
       if (event.data.response && event.data.response.error === "Not authenticated") {
-        
-        setIsLoggedIn(false);
+        setIsAuthenticated(false);
+
         setIsInRoom(false);
         setError("Session expired. Please login again.");
         return;
@@ -46,7 +63,6 @@ function App() {
         
         const response = event.data.response;
         if (response.success) {
-          setIsLoggedIn(true)
           setError('')
         } else {
           setError('Invalid username or password')
@@ -74,6 +90,7 @@ function App() {
       }
 
       if (event.data.type === 'FROM_EXTENSION_SOCKET_LATEX') {
+        console.log('Received LaTeX update:', event.data.data);
         setLatex(event.data.data);
       }
 
@@ -93,7 +110,13 @@ function App() {
       message: { type: 'fetchRooms' }
     }, '*');
 
-    return () => window.removeEventListener('message', messageHandler);
+    return () => {
+      window.removeEventListener('message', messageHandler);
+      // Cleanup MathJax when component unmounts
+      if (window.MathJax) {
+        window.MathJax.typesetClear();
+      }
+    };
   }, [roomCode]); // Add roomCode to dependencies
 
   const filteredEditingRooms = editingRooms.filter(room =>
@@ -104,21 +127,7 @@ function App() {
     room.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleLogin = async (e) => {
-    e.preventDefault()
-    try {
-      window.postMessage({
-        type: 'FROM_PAGE_LOGIN',
-        message: {
-          type: 'login',
-          data: { username, password }
-        }
-      }, '*');
-    } catch (err) {
-      console.log(err)
-      setError('Invalid username or password')
-    }
-  }
+  
 
   const handleJoinRoom = async (e) => {
     e.preventDefault()
@@ -148,31 +157,23 @@ function App() {
     }, '*');
   };
 
-  if (!isLoggedIn) {
+
+
+  if (!isAuthenticated) {
     return (
       <div className="popup-container">
-        <h2>Login</h2>
-        {error && <p className="error">{error}</p>}
-        <form onSubmit={handleLogin}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button type="submit">Login</button>
-        </form>
+        <h2>Authentication Required</h2>
+        <p>Please login to the main application first.</p>
+        <a href={config.clientUrl} target="_blank" rel="noopener noreferrer" className="login-link">
+          Go to Login Page
+        </a>
       </div>
     )
   }
 
-  if (isLoggedIn && !isInRoom) {
+  
+
+  if (!isInRoom) {
     return (
       <div className="popup-container">
         <h2>Room Management</h2>
@@ -248,18 +249,28 @@ function App() {
     );
   }
 
-  if (isLoggedIn && isInRoom) {
+  if (isInRoom) {
     return (
       <div className="popup-container">
-        <h2>Room: {roomCode}</h2>
+        <h2>Room: {roomCode} Role: {role}</h2>
         <div className="content-area">
           {role === 'editor' ? (
-            <textarea
-              className="editor-textarea"
-              value={text}
-              onChange={handleContentChange}
-              placeholder="Start typing here..."
-            />
+            <>
+              <textarea
+                className="editor-textarea"
+                value={text}
+                onChange={handleContentChange}
+                placeholder="Start typing here... "
+              />
+              {latex && (
+                <div className="latex-preview">
+                  <h3>Preview:</h3>
+                  <div className="latex-content">
+                    <LatexDisplayer latex={latex} />
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="viewer-content">
               <div className="text-content">
@@ -269,7 +280,8 @@ function App() {
                 <div className="latex-preview">
                   <h3>Preview:</h3>
                   <div className="latex-content">
-                    {latex}
+                    
+                    <LatexDisplayer latex={latex} />
                   </div>
                 </div>
               )}
@@ -279,8 +291,6 @@ function App() {
       </div>
     );
   }
-
-  // Remove the duplicate isLoggedIn check at the end
 }
 
 export default App
