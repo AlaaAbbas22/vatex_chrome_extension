@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import config from './config.js'
-import { MathJax, MathJaxContext } from 'better-react-mathjax'
-import LatexDisplayer from './Latex.jsx'
-
+import AuthRequired from './components/AuthRequired'
+import RoomManagement from './components/RoomManagement'
+import RoomContent from './components/RoomContent'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -27,7 +27,6 @@ function App() {
     }, '*');
 
     const messageHandler = (event) => {
-      
       if (event.source !== window) return;
       
       // Handle authentication check response
@@ -43,7 +42,6 @@ function App() {
       // Check for authentication errors in any response
       if (event.data.response && event.data.response.error === "Not authenticated") {
         setIsAuthenticated(false);
-
         setIsInRoom(false);
         setError("Session expired. Please login again.");
         return;
@@ -51,26 +49,13 @@ function App() {
       
       if (event.data.type === 'FROM_EXTENSION_FETCH_ROOMS') {
         const response = event.data.response;
-        
         if (response.success && response.data.editingRooms != {error: 'Not authenticated'}) {
-          console.log(response)
-          //setEditingRooms(response.data.editingRooms)
-          //setViewingRooms(response.data.viewingRooms)
-        }
-      }
-      
-      if (event.data.type === 'FROM_EXTENSION_LOGIN') {
-        
-        const response = event.data.response;
-        if (response.success) {
-          setError('')
-        } else {
-          setError('Invalid username or password')
+          setEditingRooms(response.data.editingRooms)
+          setViewingRooms(response.data.viewingRooms)
         }
       }
       
       if (event.data.type === 'FROM_EXTENSION_JOIN_ROOM') {
-        console.log(event)
         const response = event.data.response;
         if (response.success) {
           setRole(response.data.role)
@@ -90,7 +75,6 @@ function App() {
       }
 
       if (event.data.type === 'FROM_EXTENSION_SOCKET_LATEX') {
-        console.log('Received LaTeX update:', event.data.data);
         setLatex(event.data.data);
       }
 
@@ -112,12 +96,11 @@ function App() {
 
     return () => {
       window.removeEventListener('message', messageHandler);
-      // Cleanup MathJax when component unmounts
       if (window.MathJax) {
         window.MathJax.typesetClear();
       }
     };
-  }, [roomCode]); // Add roomCode to dependencies
+  }, [roomCode]);
 
   const filteredEditingRooms = editingRooms.filter(room =>
     room.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -126,8 +109,6 @@ function App() {
   const filteredViewingRooms = viewingRooms.filter(room =>
     room.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  
 
   const handleJoinRoom = async (e) => {
     e.preventDefault()
@@ -157,140 +138,35 @@ function App() {
     }, '*');
   };
 
-
-
   if (!isAuthenticated) {
-    return (
-      <div className="popup-container">
-        <h2>Authentication Required</h2>
-        <p>Please login to the main application first.</p>
-        <a href={config.clientUrl} target="_blank" rel="noopener noreferrer" className="login-link">
-          Go to Login Page
-        </a>
-      </div>
-    )
+    return <AuthRequired />;
   }
-
-  
 
   if (!isInRoom) {
     return (
-      <div className="popup-container">
-        <h2>Room Management</h2>
-        <div className="room-tabs">
-          <button
-            onClick={() => setActiveTab('editingRooms')}
-            className={`tab ${activeTab === 'editingRooms' ? 'active' : ''}`}
-          >
-            Editing Rooms
-          </button>
-          <button
-            onClick={() => setActiveTab('viewingRooms')}
-            className={`tab ${activeTab === 'viewingRooms' ? 'active' : ''}`}
-          >
-            Viewing Rooms
-          </button>
-        </div>
-
-        <input
-          type="text"
-          placeholder="Search rooms..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
-        />
-
-        <div className="rooms-list">
-          {activeTab === 'editingRooms' ? (
-            <>
-              <h3>My Editing Rooms</h3>
-              {filteredEditingRooms.map(room => (
-                <div 
-                  key={room._id} 
-                  className="room-item"
-                  onClick={() => {
-                    setRoomCode(room.name);
-                    handleJoinRoom();
-                  }}
-                >
-                  {room.name}
-                </div>
-              ))}
-            </>
-          ) : (
-            <>
-              <h3>My Viewing Rooms</h3>
-              {filteredViewingRooms.map(room => (
-                <div 
-                  key={room._id} 
-                  className="room-item"
-                  onClick={() => {
-                    setRoomCode(room.name);
-                    handleJoinRoom();
-                  }}
-                >
-                  {room.name}
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-
-        <div className="room-actions">
-          <input
-            type="text"
-            placeholder="Room name"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value)}
-          />
-          <button onClick={handleJoinRoom}>Join Room</button>
-        </div>
-      </div>
+      <RoomManagement
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        filteredEditingRooms={filteredEditingRooms}
+        filteredViewingRooms={filteredViewingRooms}
+        roomCode={roomCode}
+        setRoomCode={setRoomCode}
+        handleJoinRoom={handleJoinRoom}
+      />
     );
   }
 
-  if (isInRoom) {
-    return (
-      <div className="popup-container">
-        <h2>Room: {roomCode} Role: {role}</h2>
-        <div className="content-area">
-          {role === 'editor' ? (
-            <>
-              <textarea
-                className="editor-textarea"
-                value={text}
-                onChange={handleContentChange}
-                placeholder="Start typing here... "
-              />
-              {latex && (
-                <div className="latex-preview">
-                  <h3>Preview:</h3>
-                  <div className="latex-content">
-                    <LatexDisplayer latex={latex} />
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="viewer-content">
-              <div className="text-content">
-                {text || 'No content yet'}
-              </div>
-              {latex && (
-                <div className="latex-preview">
-                  <h3>Preview:</h3>
-                  <div className="latex-content">
-                    
-                    <LatexDisplayer latex={latex} />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
+  return (
+    <RoomContent
+      roomCode={roomCode}
+      role={role}
+      text={text}
+      latex={latex}
+      handleContentChange={handleContentChange}
+    />
+  );
 }
 
-export default App
+export default App;
