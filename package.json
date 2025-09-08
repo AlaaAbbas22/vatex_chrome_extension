@@ -10,12 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.13",
     "axios": "^1.8.1",
     "better-react-mathjax": "^2.3.0",
     "katex": "^0.16.22",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "socket.io-client": "^4.8.1",
+    "tailwindcss": "^4.1.13",
     "vite-plugin-static-copy": "^2.2.0"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { viteStaticCopy } from 'vite-plugin-static-copy'
-
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { viteStaticCopy } from "vite-plugin-static-copy";
+import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -10,11 +10,11 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         {
-          src: 'extension-skeleton/*',  
-          dest: './',
+          src: "extension-skeleton/*",
+          dest: "./",
         },
       ],
-    })
-    
+    }),
+    tailwindcss(),
   ],
-})
+});
