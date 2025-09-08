@@ -20,8 +20,7 @@
     }
   ],
   "host_permissions": ["<all_urls>"],
-  "permissions": ["storage",
-  "cookies", "http://localhost:5000/"],
+  "permissions": ["storage", "cookies"],
   "web_accessible_resources": [
     {
       "resources": ["index.html"],
