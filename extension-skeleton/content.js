@@ -130,6 +130,7 @@ fetch(chrome.runtime.getURL("index.html"))
       return false;
     };
   });
+
 // Listen for messages from the background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "FROM_SOCKET_LATEX") {

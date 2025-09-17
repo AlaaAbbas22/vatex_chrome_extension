@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import "./index.css";
-import config from "./config.js";
 import AuthRequired from "./components/AuthRequired";
 import RoomManagement from "./components/RoomManagement";
 import RoomContent from "./components/RoomContent";
@@ -9,7 +8,6 @@ import RoomContent from "./components/RoomContent";
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [roomCode, setRoomCode] = useState("");
-  const [content, setContent] = useState("");
   const [error, setError] = useState("");
   const [role, setRole] = useState("");
   const [isInRoom, setIsInRoom] = useState(false);
