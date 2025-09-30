@@ -1,5 +1,5 @@
 import React from 'react';
-import config from '../config.js';
+import config from '../../extension-skeleton/config.js';
 
 const AuthRequired = () => {
   return (

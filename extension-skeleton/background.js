@@ -32,6 +32,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return handleInitSocket(request, sender, sendResponse);
     case "emitText":
       return handleEmitText(request, sender, sendResponse);
+    case "transcribeAudio":
+      return handleTranscribeAudio(request, sender, sendResponse);
     default:
       sendResponse({ success: false, error: "Unknown request type" });
       return false;
@@ -211,4 +213,59 @@ function handleEmitText(request, sender, sendResponse) {
     sendResponse({ success: false, error: "Socket not initialized" });
   }
   return true;
+}
+
+/**
+ * Handles audio transcription requests
+ * @param {Object} request - The request object containing audioData, language, and prompt
+ * @param {Object} sender - The sender object containing tab information
+ * @param {Function} sendResponse - Callback function to send response
+ * @returns {boolean} - Always returns true for async response
+ */
+function handleTranscribeAudio(request, sender, sendResponse) {
+  try {
+    // Convert base64 back to blob
+    const binaryString = atob(request.audioData);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const audioBlob = new Blob([bytes], { type: "audio/webm" });
+
+    // Create FormData for the transcription request
+    const formData = new FormData();
+    formData.append("audioFile", audioBlob, "recording.webm");
+    formData.append("language", request.language || "en");
+    formData.append(
+      "prompt",
+      request.prompt ||
+        "This is math content for a lecture. If unclear, return empty string"
+    );
+
+    // Send request to transcription server
+    fetch(`${config.transcriptionUrl}/transcribe`, {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            `Server error: ${response.status} ${response.statusText}`
+          );
+        }
+        return response.json();
+      })
+      .then((result) => {
+        sendResponse({ success: true, text: result.text || result, requestId: request.requestId });
+      })
+      .catch((error) => {
+        console.error("❌ Transcription error:", error);
+        sendResponse({ success: false, error: error.message });
+      });
+  } catch (error) {
+    console.error("❌ Transcription processing error:", error);
+    sendResponse({ success: false, error: error.message });
+  }
+
+  return true; // Will respond asynchronously
 }

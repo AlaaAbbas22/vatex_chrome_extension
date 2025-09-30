@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import "./index.css";
 import AuthRequired from "./components/AuthRequired";
 import RoomManagement from "./components/RoomManagement";
 import RoomContent from "./components/RoomContent";
+import PushToTalkManager from "./utils/pushToTalk";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,8 +18,29 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [text, setText] = useState("");
   const [latex, setLatex] = useState("");
+  const [isPushToTalkActive, setIsPushToTalkActive] = useState(false);
+  const pushToTalkRef = useRef(null);
+  const isEmittingTextRef = useRef(false);
+  const handledRequestIds = new Set();
 
   useEffect(() => {
+    // Initialize push-to-talk when component mounts
+    pushToTalkRef.current = new PushToTalkManager({
+      onStartRecording: () => {
+        setIsPushToTalkActive(true);
+      },
+      onStopRecording: () => {
+        setIsPushToTalkActive(false);
+      },
+      onError: (error) => {
+        console.error("❌ Push-to-talk error:", error);
+        setIsPushToTalkActive(false);
+      },
+      serverUrl: "http://127.0.0.1:5000",
+    });
+
+    pushToTalkRef.current.init();
+
     // Check authentication status when component mounts
     window.postMessage(
       {
@@ -69,6 +91,8 @@ function App() {
           setRole(response.data.role);
           setIsInRoom(true);
           setError("");
+          // Store current room ID for push-to-talk
+          window.currentRoomId = roomCode;
           // Initialize socket when joining room
           window.postMessage(
             {
@@ -91,8 +115,55 @@ function App() {
 
       if (event.data.type === "FROM_EXTENSION_SOCKET_TEXT") {
         const { text, username } = event.data.data;
-        if (username !== localStorage.getItem("username")) {
+        if (
+          username !== localStorage.getItem("username") &&
+          !isEmittingTextRef.current
+        ) {
           setText(text);
+        }
+        // Reset the flag after processing
+        isEmittingTextRef.current = false;
+      }
+
+      // Handle transcription response from push-to-talk
+      if (event.data.type === "FROM_EXTENSION_TRANSCRIBE_AUDIO") {
+        const { requestId, response } = event.data;
+
+        // Deduplicate by requestId if present
+        if (response.requestId) {
+          if (handledRequestIds.has(response.requestId)) return;
+          handledRequestIds.add(response.requestId);
+        }
+        if (
+          response &&
+          response.success &&
+          response.text &&
+          response.text.trim()
+        ) {
+          // Append transcribed text to current text
+          setText((prevText) => {
+            const newText = prevText
+              ? `${prevText} ${response.text}`
+              : response.text;
+
+            // Set flag to prevent socket loop
+            isEmittingTextRef.current = true;
+
+            // Emit the updated text to the room
+            window.postMessage(
+              {
+                type: "FROM_PAGE_EMIT_TEXT",
+                message: {
+                  type: "emitText",
+                  text: newText,
+                  roomId: roomCode,
+                },
+              },
+              "*"
+            );
+
+            return newText;
+          });
         }
       }
     };
@@ -112,6 +183,10 @@ function App() {
       window.removeEventListener("message", messageHandler);
       if (window.MathJax) {
         window.MathJax.typesetClear();
+      }
+      // Cleanup push-to-talk
+      if (pushToTalkRef.current) {
+        pushToTalkRef.current.destroy();
       }
     };
   }, [roomCode]);
@@ -205,6 +280,7 @@ function App() {
         handleLeaveRoom={() => {
           setIsInRoom(false);
         }}
+        isPushToTalkActive={isPushToTalkActive}
       />
     </>
   );

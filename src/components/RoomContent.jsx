@@ -8,6 +8,7 @@ const RoomContent = ({
   text,
   setLatexContent,
   handleLeaveRoom,
+  isPushToTalkActive,
 }) => {
   return (
     <div className="popup-container">
@@ -26,6 +27,31 @@ const RoomContent = ({
           <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
             <strong>Role:</strong> {userRole === "editor" ? "Editor" : "Viewer"}
           </span>
+
+          {/* Push-to-talk status indicator */}
+          <div
+            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+              isPushToTalkActive
+                ? "bg-red-100 text-red-700 border border-red-200"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            <svg
+              className={`w-3 h-3 ${isPushToTalkActive ? "animate-pulse" : ""}`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span>
+              {isPushToTalkActive ? "Recording..." : "Hold Ctrl to speak"}
+            </span>
+          </div>
+
           <button
             onClick={handleLeaveRoom}
             className="text-red-600 hover:text-red-700 flex items-center gap-1"
