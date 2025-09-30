@@ -6,8 +6,9 @@ const LatexDisplayer = ({ latex }) => {
   useEffect(() => {
     // Load MathJax script if not already loaded
     if (!window.MathJax) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      const script = document.createElement("script");
+      script.src =
+        "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
       script.async = true;
       document.head.appendChild(script);
     }
@@ -15,10 +16,10 @@ const LatexDisplayer = ({ latex }) => {
     // Update content and typeset
     const updateMathJax = () => {
       if (containerRef.current && window.MathJax) {
-        containerRef.current.innerHTML = `$${latex}$`;
+        containerRef.current.innerHTML = `$$${latex}$$`;
         window.MathJax.typesetClear([containerRef.current]);
         window.MathJax.typesetPromise([containerRef.current]).catch((err) => {
-          console.error('MathJax typesetting failed:', err);
+          console.error("MathJax typesetting failed:", err);
         });
       }
     };
@@ -45,4 +46,4 @@ const LatexDisplayer = ({ latex }) => {
   return <div ref={containerRef} className="latex-content" />;
 };
 
-export default LatexDisplayer; 
+export default LatexDisplayer;

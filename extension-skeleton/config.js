@@ -8,6 +8,7 @@ const config = {
   // API endpoints
   apiUrl: "http://localhost:5000",
   clientUrl: "http://localhost:3000",
+  transcriptionUrl: "http://127.0.0.1:5000",
 
   // Socket.io settings
   socketOptions: {
