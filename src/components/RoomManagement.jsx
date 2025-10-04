@@ -75,7 +75,7 @@ const RoomManagement = ({
                   key={room._id}
                   className="room-item"
                   onClick={() => {
-                    setRoomCode(room.name);
+                    setRoomCode(room._id);
                     handleJoinRoom();
                   }}
                 >
@@ -102,7 +102,7 @@ const RoomManagement = ({
                   key={room._id}
                   className="room-item"
                   onClick={() => {
-                    setRoomCode(room.name);
+                    setRoomCode(room._id);
                     handleJoinRoom();
                   }}
                 >
@@ -122,7 +122,7 @@ const RoomManagement = ({
       <div className="room-actions">
         <input
           type="text"
-          placeholder="Enter room name to join"
+          placeholder="Enter room ID to join"
           value={roomCode}
           onChange={(e) => setRoomCode(e.target.value)}
         />

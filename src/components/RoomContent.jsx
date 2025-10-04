@@ -13,7 +13,7 @@ const RoomContent = ({
   return (
     <div className="popup-container">
       <div className="room-header">
-        <span className="flex items-center gap-2">
+        <span>
           <span
             className="text-xl font-bold"
             style={{

@@ -11,6 +11,7 @@ function App() {
   const [roomCode, setRoomCode] = useState("");
   const [error, setError] = useState("");
   const [role, setRole] = useState("");
+  const [roomName, setRoomName] = useState("");
   const [isInRoom, setIsInRoom] = useState(false);
   const [editingRooms, setEditingRooms] = useState([]);
   const [viewingRooms, setViewingRooms] = useState([]);
@@ -89,6 +90,7 @@ function App() {
         const response = event.data.response;
         if (response.success) {
           setRole(response.data.role);
+          setRoomName(response.data.roomName || roomCode);
           setIsInRoom(true);
           setError("");
           // Store current room ID for push-to-talk
@@ -127,7 +129,7 @@ function App() {
 
       // Handle transcription response from push-to-talk
       if (event.data.type === "FROM_EXTENSION_TRANSCRIBE_AUDIO") {
-        const { requestId, response } = event.data;
+        const { response } = event.data;
 
         // Deduplicate by requestId if present
         if (response.requestId) {
@@ -271,7 +273,7 @@ function App() {
       <br />
       <RoomContent
         room={{
-          name: roomCode,
+          name: roomName || roomCode,
         }}
         userRole={role}
         latexContent={latex}

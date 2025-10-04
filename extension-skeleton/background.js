@@ -122,20 +122,37 @@ function handleFetchRooms(request, sender, sendResponse) {
 }
 
 /**
- * Handles joining a room by checking user's role in the room
+ * Handles joining a room by checking user's role and fetching room details
  * @param {Object} request - The request object containing roomCode
  * @param {Object} sender - The sender object containing tab information
  * @param {Function} sendResponse - Callback function to send response
  * @returns {boolean} - Always returns true for async response
  */
 function handleJoinRoom(request, sender, sendResponse) {
+  // First get the user's role
   fetch(`${config.apiUrl}/rooms/${request.roomCode}/role`, {
     method: "GET",
     credentials: "include",
   })
     .then((response) => response.json())
-    .then((data) => {
-      sendResponse({ success: true, data });
+    .then((roleData) => {
+      // Then get the room details to fetch the room name
+      return fetch(`${config.apiUrl}/rooms/${request.roomCode}`, {
+        method: "GET",
+        credentials: "include",
+      })
+        .then((response) => response.json())
+        .then((roomData) => {
+          // Combine role and room details
+          sendResponse({
+            success: true,
+            data: {
+              role: roleData.role,
+              roomName: roomData.name,
+              roomDetails: roomData,
+            },
+          });
+        });
     })
     .catch((error) => sendResponse({ success: false, error: error.message }));
   return true;
@@ -256,7 +273,11 @@ function handleTranscribeAudio(request, sender, sendResponse) {
         return response.json();
       })
       .then((result) => {
-        sendResponse({ success: true, text: result.text || result, requestId: request.requestId });
+        sendResponse({
+          success: true,
+          text: result.text || result,
+          requestId: request.requestId,
+        });
       })
       .catch((error) => {
         console.error("❌ Transcription error:", error);
