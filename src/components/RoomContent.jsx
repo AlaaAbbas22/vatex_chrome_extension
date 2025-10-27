@@ -1,5 +1,6 @@
 import React from "react";
 import LatexDisplayer from "../Latex";
+import DrawingBoard from "./DrawingBoard";
 
 const RoomContent = ({
   room,
@@ -9,6 +10,11 @@ const RoomContent = ({
   setLatexContent,
   handleLeaveRoom,
   isPushToTalkActive,
+  inputMode,
+  setInputMode,
+  store,
+  editorRef,
+  onDrawingChange,
 }) => {
   return (
     <div className="popup-container">
@@ -77,30 +83,87 @@ const RoomContent = ({
 
       {userRole === "editor" && (
         <div className="editor-section mb-[50px]">
-          <div className="flex items-center gap-2 mb-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-2 w-2 text-gray-600"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              style={{
-                width: "50px",
-              }}
-            >
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <h3 className="text-lg font-semibold">LaTeX Editor</h3>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-2 w-2 text-gray-600"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                style={{
+                  width: "50px",
+                }}
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <h3 className="text-lg font-semibold">
+                {inputMode === "text" ? "LaTeX Editor" : "Drawing Board"}
+              </h3>
+            </div>
+
+            {/* Input Mode Switcher */}
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setInputMode("text")}
+                className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                  inputMode === "text"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="inline-block w-4 h-4 mr-1"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+                Text
+              </button>
+              <button
+                onClick={() => setInputMode("drawing")}
+                className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                  inputMode === "drawing"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="inline-block w-4 h-4 mr-1"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Draw
+              </button>
+            </div>
           </div>
-          <textarea
-            value={text}
-            onChange={(e) => setLatexContent(e.target.value)}
-            placeholder="Enter LaTeX content here..."
-            className="latex-editor"
-          />
+
+          {inputMode === "text" ? (
+            <textarea
+              value={text}
+              onChange={(e) => setLatexContent(e.target.value)}
+              placeholder="Enter LaTeX content here..."
+              className="latex-editor"
+            />
+          ) : (
+            <DrawingBoard
+              store={store}
+              editorRef={editorRef}
+              onDrawingChange={onDrawingChange}
+            />
+          )}
         </div>
       )}
 
