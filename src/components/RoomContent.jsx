@@ -15,6 +15,7 @@ const RoomContent = ({
   store,
   editorRef,
   onDrawingChange,
+  isLoadingFromSocketRef,
 }) => {
   return (
     <div className="popup-container">
@@ -162,6 +163,7 @@ const RoomContent = ({
               store={store}
               editorRef={editorRef}
               onDrawingChange={onDrawingChange}
+              isLoadingFromSocketRef={isLoadingFromSocketRef}
             />
           )}
         </div>

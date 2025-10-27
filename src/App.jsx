@@ -254,6 +254,7 @@ function App() {
   };
 
   const handleContentChange = (value) => {
+    console.log("handleContentChange");
     const newText = value;
     setText(newText);
     window.postMessage(
@@ -270,6 +271,7 @@ function App() {
   };
 
   const handleDrawingChange = async () => {
+    console.log("handleDrawingChange");
     if (isLoadingFromSocketRef.current) return;
 
     try {
@@ -368,6 +370,7 @@ function App() {
         store={store}
         editorRef={editorRef}
         onDrawingChange={handleDrawingChange}
+        isLoadingFromSocketRef={isLoadingFromSocketRef}
       />
     </>
   );
