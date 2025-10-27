@@ -20,7 +20,7 @@ This is the Chrome extension version of the Vatex application, providing voice-t
 1. Install dependencies:
 
 ```bash
-npm install
+npm install --force
 ```
 
 2. Build the extension:
