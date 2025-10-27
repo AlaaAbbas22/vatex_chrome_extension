@@ -164,6 +164,16 @@ if (window.__VatexBridgeInstalled) {
           "*"
         );
       }
+
+      if (message.type === "FROM_SOCKET_DRAWING") {
+        window.postMessage(
+          {
+            type: "FROM_EXTENSION_SOCKET_DRAWING",
+            data: message.data,
+          },
+          "*"
+        );
+      }
     });
     window.__VatexRuntimeOnMessageAdded = true;
   }
@@ -174,6 +184,12 @@ if (window.__VatexBridgeInstalled) {
       if (event.source !== window) return;
 
       if (event.data.type === "FROM_PAGE_EMIT_TEXT") {
+        chrome.runtime.sendMessage(event.data.message, (response) => {
+          // Handle response if needed
+        });
+      }
+
+      if (event.data.type === "FROM_PAGE_EMIT_DRAWING") {
         chrome.runtime.sendMessage(event.data.message, (response) => {
           // Handle response if needed
         });

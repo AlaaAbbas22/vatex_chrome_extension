@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import "./App.css";
 import "./index.css";
 import AuthRequired from "./components/AuthRequired";
 import RoomManagement from "./components/RoomManagement";
 import RoomContent from "./components/RoomContent";
 import PushToTalkManager from "./utils/pushToTalk";
+import { createTLStore } from "tldraw";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -23,6 +24,13 @@ function App() {
   const pushToTalkRef = useRef(null);
   const isEmittingTextRef = useRef(false);
   const handledRequestIds = new Set();
+
+  // Drawing state
+  const [inputMode, setInputMode] = useState("text");
+  const store = useMemo(() => createTLStore(), []);
+  const editorRef = useRef(null);
+  const lastEmittedSnapshotRef = useRef("");
+  const isLoadingFromSocketRef = useRef(false);
 
   useEffect(() => {
     // Initialize push-to-talk when component mounts
@@ -127,6 +135,27 @@ function App() {
         isEmittingTextRef.current = false;
       }
 
+      // Handle drawing data from socket
+      if (event.data.type === "FROM_EXTENSION_SOCKET_DRAWING") {
+        const { data, username } = event.data.data;
+        if (username !== localStorage.getItem("username") && data) {
+          try {
+            isLoadingFromSocketRef.current = true;
+            const snapshot = JSON.parse(data);
+            import("tldraw").then(({ loadSnapshot }) => {
+              loadSnapshot(store, snapshot);
+              lastEmittedSnapshotRef.current = data;
+              setTimeout(() => {
+                isLoadingFromSocketRef.current = false;
+              }, 200);
+            });
+          } catch (error) {
+            console.error("Error loading drawing:", error);
+            isLoadingFromSocketRef.current = false;
+          }
+        }
+      }
+
       // Handle transcription response from push-to-talk
       if (event.data.type === "FROM_EXTENSION_TRANSCRIBE_AUDIO") {
         const { response } = event.data;
@@ -225,6 +254,7 @@ function App() {
   };
 
   const handleContentChange = (value) => {
+    console.log("handleContentChange");
     const newText = value;
     setText(newText);
     window.postMessage(
@@ -238,6 +268,58 @@ function App() {
       },
       "*"
     );
+  };
+
+  const handleDrawingChange = async () => {
+    console.log("handleDrawingChange");
+    if (isLoadingFromSocketRef.current) return;
+
+    try {
+      const { getSnapshot, exportToBlob } = await import("tldraw");
+      const snapshot = getSnapshot(store);
+      const snapshotString = JSON.stringify(snapshot);
+
+      if (snapshotString === lastEmittedSnapshotRef.current) return;
+
+      // Export drawing as image
+      let imageData = null;
+      if (editorRef.current) {
+        const editor = editorRef.current;
+        const shapeIds = editor.getCurrentPageShapeIds();
+
+        if (shapeIds.size > 0) {
+          const blob = await exportToBlob({
+            editor,
+            ids: Array.from(shapeIds),
+            format: "png",
+            opts: { background: true, padding: 16, scale: 2 },
+          });
+
+          imageData = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = () => resolve(reader.result);
+          });
+        }
+      }
+
+      window.postMessage(
+        {
+          type: "FROM_PAGE_EMIT_DRAWING",
+          message: {
+            type: "emitDrawing",
+            data: snapshotString,
+            roomId: roomCode,
+            imageData,
+          },
+        },
+        "*"
+      );
+
+      lastEmittedSnapshotRef.current = snapshotString;
+    } catch (error) {
+      console.error("Error emitting drawing:", error);
+    }
   };
 
   if (!isAuthenticated) {
@@ -283,6 +365,12 @@ function App() {
           setIsInRoom(false);
         }}
         isPushToTalkActive={isPushToTalkActive}
+        inputMode={inputMode}
+        setInputMode={setInputMode}
+        store={store}
+        editorRef={editorRef}
+        onDrawingChange={handleDrawingChange}
+        isLoadingFromSocketRef={isLoadingFromSocketRef}
       />
     </>
   );

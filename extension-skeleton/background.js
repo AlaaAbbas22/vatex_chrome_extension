@@ -32,6 +32,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return handleInitSocket(request, sender, sendResponse);
     case "emitText":
       return handleEmitText(request, sender, sendResponse);
+    case "emitDrawing":
+      return handleEmitDrawing(request, sender, sendResponse);
     case "transcribeAudio":
       return handleTranscribeAudio(request, sender, sendResponse);
     default:
@@ -213,6 +215,13 @@ function setupSocketEventListeners(sender, roomId) {
       data: { text, username },
     });
   });
+
+  socket.on("receive-drawing", (data, username) => {
+    chrome.tabs.sendMessage(sender.tab.id, {
+      type: "FROM_SOCKET_DRAWING",
+      data: { data, username },
+    });
+  });
 }
 
 /**
@@ -225,6 +234,29 @@ function setupSocketEventListeners(sender, roomId) {
 function handleEmitText(request, sender, sendResponse) {
   if (socket) {
     socket.emit("send-text", request.text, request.roomId, sessionId);
+    sendResponse({ success: true });
+  } else {
+    sendResponse({ success: false, error: "Socket not initialized" });
+  }
+  return true;
+}
+
+/**
+ * Handles sending drawing updates to the server via socket
+ * @param {Object} request - The request object containing drawing data, roomId, and imageData
+ * @param {Object} sender - The sender object containing tab information
+ * @param {Function} sendResponse - Callback function to send response
+ * @returns {boolean} - Always returns true for async response
+ */
+function handleEmitDrawing(request, sender, sendResponse) {
+  if (socket) {
+    socket.emit(
+      "send-drawing",
+      request.data,
+      request.roomId,
+      sessionId,
+      request.imageData
+    );
     sendResponse({ success: true });
   } else {
     sendResponse({ success: false, error: "Socket not initialized" });
