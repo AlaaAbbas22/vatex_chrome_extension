@@ -17,6 +17,14 @@ This is the Chrome extension version of the Vatex application, providing voice-t
 
 ## Installation
 
+0. Ensure the api URL and client URL for the app in the config
+
+```
+# extension-skeleton\config.js
+apiUrl: "https://vatex.onrender.com", # or something else if you are running the app yourself
+clientUrl: "https://vatex.vercel.app",# or something else if you are running the app yourself
+```
+
 1. Install dependencies:
 
 ```bash
