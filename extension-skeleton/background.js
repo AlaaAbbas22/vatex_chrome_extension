@@ -51,7 +51,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  */
 function handleCheckAuth(request, sender, sendResponse) {
   chrome.cookies.get(
-    { url: config.clientUrl, name: config.cookieName },
+    { url: config.apiUrl, name: config.cookieName },
     (cookie) => {
       if (cookie && cookie.value) {
         sessionId = cookie.value; // Store the session ID for later use
@@ -170,7 +170,7 @@ function handleJoinRoom(request, sender, sendResponse) {
 function handleInitSocket(request, sender, sendResponse) {
   // Get cookies before initializing socket
   chrome.cookies.get(
-    { url: config.clientUrl, name: config.cookieName },
+    { url: config.apiUrl, name: config.cookieName },
     async (cookie) => {
       // Store session ID for future use
       sessionId = cookie.value;
@@ -292,7 +292,7 @@ function handleTranscribeAudio(request, sender, sendResponse) {
     );
 
     // Send request to transcription server
-    fetch(`${config.transcriptionUrl}/transcribe`, {
+    fetch(`${config.apiUrl}/transcribe`, {
       method: "POST",
       body: formData,
     })
