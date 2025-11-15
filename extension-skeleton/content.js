@@ -12,6 +12,10 @@ if (window.__VatexBridgeInstalled) {
 } else {
   window.__VatexBridgeInstalled = true;
 
+  // Global variable to store the container element
+  let extensionContainer = null;
+  let isPopupVisible = false;
+
   /*
    * This file is responsible for injecting the extension into the page.
    * It also listens for messages from the background script and the page.
@@ -47,6 +51,10 @@ if (window.__VatexBridgeInstalled) {
       container.style.left = "0";
       container.style.backgroundColor = "white";
       container.style.border = "1px solid black";
+      container.style.display = "none"; // Hide by default
+
+      // Store reference to container
+      extensionContainer = container;
 
       // Add message bridge before creating shadow root
       /*
@@ -104,7 +112,7 @@ if (window.__VatexBridgeInstalled) {
       script.onload = () => script.remove();
       shadowRoot.appendChild(script);
 
-      // === DRAGGING FUNCTIONALITY ===
+      // === DRAGGING FUNCTIONALITY AND CLOSE BUTTON ===
       const header = document.createElement("div");
       header.style.backgroundColor = "darkblue";
       header.style.color = "white";
@@ -112,8 +120,34 @@ if (window.__VatexBridgeInstalled) {
       header.style.cursor = "move";
       header.style.position = "absolute";
       header.style.top = "0";
-      header.style.width = "80%";
-      header.innerText = "Drag me";
+      header.style.width = "calc(100% - 40px)";
+      header.style.display = "flex";
+      header.style.justifyContent = "space-between";
+      header.style.alignItems = "center";
+
+      const headerText = document.createElement("span");
+      headerText.innerText = "Vatex - Drag me";
+      header.appendChild(headerText);
+
+      // Create close button
+      const closeButton = document.createElement("button");
+      closeButton.innerText = "✕";
+      closeButton.style.backgroundColor = "transparent";
+      closeButton.style.border = "none";
+      closeButton.style.color = "white";
+      closeButton.style.fontSize = "20px";
+      closeButton.style.cursor = "pointer";
+      closeButton.style.padding = "0 5px";
+      closeButton.style.marginLeft = "10px";
+      closeButton.title = "Close popup";
+
+      closeButton.onclick = function (e) {
+        e.stopPropagation(); // Prevent triggering drag
+        container.style.display = "none";
+        isPopupVisible = false;
+      };
+
+      header.appendChild(closeButton);
       shadowRoot.appendChild(header);
 
       header.onmousedown = function (event) {
@@ -145,6 +179,13 @@ if (window.__VatexBridgeInstalled) {
   // Listen for messages from the background script
   if (!window.__VatexRuntimeOnMessageAdded) {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.type === "TOGGLE_POPUP") {
+        if (extensionContainer) {
+          isPopupVisible = !isPopupVisible;
+          extensionContainer.style.display = isPopupVisible ? "block" : "none";
+        }
+      }
+
       if (message.type === "FROM_SOCKET_LATEX") {
         window.postMessage(
           {

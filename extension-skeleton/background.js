@@ -14,6 +14,13 @@ let socket = null;
 let sessionId = null;
 
 /**
+ * Handle extension icon click to toggle the popup
+ */
+chrome.action.onClicked.addListener((tab) => {
+  chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_POPUP" });
+});
+
+/**
  * Main message listener for handling all extension communication
  * Routes different request types to their respective handlers
  */

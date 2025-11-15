@@ -3,6 +3,9 @@
   "name": "Vatex",
   "version": "1.0.0",
   "description": "A Chrome extension for Vatex - Voice to LaTeX",
+  "action": {
+    "default_title": "Toggle Vatex"
+  },
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -20,7 +23,7 @@
     }
   ],
   "host_permissions": ["<all_urls>"],
-  "permissions": ["storage", "cookies"],
+  "permissions": ["storage", "cookies", "activeTab"],
   "web_accessible_resources": [
     {
       "resources": ["index.html"],
