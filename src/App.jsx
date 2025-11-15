@@ -212,9 +212,7 @@ function App() {
 
     return () => {
       window.removeEventListener("message", messageHandler);
-      if (window.MathJax) {
-        window.MathJax.typesetClear();
-      }
+
       // Cleanup push-to-talk
       if (pushToTalkRef.current) {
         pushToTalkRef.current.destroy();
